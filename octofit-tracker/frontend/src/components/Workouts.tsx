@@ -1,4 +1,5 @@
 import { CapabilityCard } from './CapabilityCard.js';
+import { getJson } from '../api/client.js';
 import { useApiResource } from './useApiResource.js';
 
 type Workout = {
@@ -14,7 +15,7 @@ const userEmail = 'mona@example.com';
 
 export default function Workouts() {
   const path = `/api/workouts/suggestions/${encodeURIComponent(userEmail)}`;
-  const { data, loading, error } = useApiResource<WorkoutResponse>(path);
+  const { data, loading, error } = useApiResource<WorkoutResponse>(path, getJson<WorkoutResponse>);
 
   return (
     <CapabilityCard title="Workout suggestions" description="Recommend workouts from activity patterns.">

@@ -7,7 +7,7 @@ type ResourceState<T> = {
   error: string | null;
 };
 
-export function useApiResource<T>(path: string) {
+export function useApiResource<T>(path: string, load: (path: string) => Promise<T>) {
   const [state, setState] = useState<ResourceState<T>>({
     data: null,
     loading: true,
@@ -16,7 +16,7 @@ export function useApiResource<T>(path: string) {
 
   useEffect(() => {
     let active = true;
-    getJson<T>(path)
+    load(path)
       .then((data) => {
         if (active) setState({ data, loading: false, error: null });
       })
@@ -33,7 +33,7 @@ export function useApiResource<T>(path: string) {
     return () => {
       active = false;
     };
-  }, [path]);
+  }, [load, path]);
 
   return state;
 }

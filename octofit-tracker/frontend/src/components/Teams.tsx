@@ -1,11 +1,12 @@
 import { CapabilityCard } from './CapabilityCard.js';
+import { getJson } from '../api/client.js';
 import { useApiResource } from './useApiResource.js';
 
 type Team = { _id?: string; name: string; mascot: string; members: string[] };
 type TeamResponse = { teams: Team[] };
 
 export default function Teams() {
-  const { data, loading, error } = useApiResource<TeamResponse>('/api/teams');
+  const { data, loading, error } = useApiResource<TeamResponse>('/api/teams', getJson<TeamResponse>);
 
   return (
     <CapabilityCard title="Teams" description="Manage teams and members.">
