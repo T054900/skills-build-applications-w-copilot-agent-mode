@@ -28,22 +28,22 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 ## Implementation decisions
 
-Record your plan here before editing code.
-
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+- Presentation tier decision: Keep the shared API client as the only browser-to-API boundary. Each route owns its capability view and exposes accessible loading, empty, and error states; presentation components do not calculate business results.
+- Logic tier decision: Keep HTTP handling in the Express routes and capability behavior in `octofitService.ts`. Validate request data and references before writes, return deliberate 4xx responses for invalid or unknown resources, and pass unexpected failures to the existing Express error handler.
+- Data tier decision: Make Mongoose schemas enforce required fields and valid references, default team members to an empty array, and persist the activity and workout fields required by the API. Keep demo data creation idempotent and preserve unrelated records.
+- Activity tracking approach: Accept `userId`, `teamId`, `type`, and positive `minutes`; validate both IDs and confirm the referenced user and team exist. Store their references, the submitted activity details, server-generated `occurredAt`, and computed `points` (`1` point per minute) when creating the activity.
+- Team management approach: Require a non-empty name and mascot, default omitted members to an empty array, and preserve the submitted name and mascot in create/list responses. Validate supplied member IDs before saving.
+- Leaderboard approach: Aggregate persisted activity points by team, include teams with no activities at zero points, sort by total points descending, and assign 1-based ranks in the response.
+- Workout suggestions approach: Find the user by email and use the user's fitness goal to select a matching workout when available; otherwise use the user's most recent activity type as the focus. Include a short reason for the match and return a 4xx response when the email has no matching user.
 
 ## Test plan
 
-Record the commands you run and what each failure means.
+Baseline run on 2026-11-13:
 
-- Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
-- API command: `npm run test:api --prefix octofit-tracker/backend`
-- Frontend command: `npm test --prefix octofit-tracker/frontend`
-- Backend build command: `npm run build --prefix octofit-tracker/backend`
-- Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+- Data tier: `npm run test:data --prefix octofit-tracker/backend` — **fails (4 failed, 1 passed)**. The user, team, activity, and workout schema validation checks fail when required fields are missing; the idempotent seed test passes.
+- API: `npm run test:api --prefix octofit-tracker/backend` — **fails (4 failed)**. Activity and team validation currently return `501` instead of `400`, the leaderboard returns no entries for recorded activity, and workout suggestions do not match the user's goal/activity. These failures identify incomplete API/service behavior.
+- Frontend: `npm test --prefix octofit-tracker/frontend` — **fails (15 failed)**. The route components do not yet render API-backed capability data or the required loading, empty, and accessible error states, and the workout route does not request suggestions for the selected user.
+- Backend build: `npm run build --prefix octofit-tracker/backend` — **passes**. A failure indicates a TypeScript compile/type error.
+- Frontend build: `npm run build --prefix octofit-tracker/frontend` — **passes**. A failure indicates a TypeScript or Vite production-build error.
+
+Run the data tests first, then the API tests, then frontend tests; finish with both builds. A failure should be fixed in the tier named by that command before moving to dependent tiers. The repository-level exercise scaffolding check is separate from these application contracts; failures there concern exercise files or workflow/README conventions, not OctoFit tier behavior.
